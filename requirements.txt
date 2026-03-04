@@ -1,16 +1,13 @@
-torch==2.0.1
-torchvision==0.15.2
-torchaudio==2.0.2
---extra-index-url https://download.pytorch.org/whl/cpu
 streamlit
+torch
+transformers
 requests
 beautifulsoup4
 lxml
 newspaper3k
 nltk
 Pillow
-transformers
 sentencepiece
 protobuf
 accelerate
-git+https://github.com/IndoNLP/indonlg.git
+indobenchmark-toolkit

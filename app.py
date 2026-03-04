@@ -9,6 +9,9 @@ from newspaper import Article
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, PreTrainedTokenizerBase
 from transformers import MarianMTModel, MarianTokenizer
 
+# Import custom tokenizer for IndoBART
+from tokenization_indonlg import IndoNLGTokenizer
+
 
 # -------------------------------------------------------
 # STYLE UI (opsional)
@@ -363,14 +366,6 @@ def _compat_pad(
 # -------------------------------------------------------
 @st.cache_resource(show_spinner="Memuat model IndoBART dan tokenizer...")
 def load_model_and_tokenizer():
-    # Debug: Check if AutoTokenizer is available
-    try:
-        from transformers import AutoTokenizer as AT, AutoModelForSeq2SeqLM as AM
-        st.write("✅ Import transformers berhasil")
-    except ImportError as ie:
-        st.error(f"❌ Import transformers gagal: {ie}")
-        st.stop()
-
     # ⚠️ GANTI INI dengan model Anda di HuggingFace Hub
     # Contoh: "username/model-name" atau gunakan model base "indobenchmark/indobart-v2"
     model_path = "indobenchmark/indobart-v2"  # Model base, bukan fine-tuned
@@ -378,20 +373,21 @@ def load_model_and_tokenizer():
 
     # --- Load model ---
     try:
-        st.write("Memuat model:", model_path)
-        model = AM.from_pretrained(
+        st.write("✅ Memuat model IndoBART:", model_path)
+        model = AutoModelForSeq2SeqLM.from_pretrained(
             model_path,
             trust_remote_code=True,
         ).to(device)
         model.eval()
+        st.write("✅ Model berhasil dimuat")
     except Exception as e:
         st.error(f"❌ Gagal memuat model. Detail: {e}")
         st.stop()
 
-    # --- Load tokenizer ---
+    # --- Load tokenizer (using custom IndoNLGTokenizer) ---
     try:
-        st.write("Memuat tokenizer...")
-        tokenizer = AT.from_pretrained(model_path)
+        st.write("✅ Memuat custom IndoNLG tokenizer...")
+        tokenizer = IndoNLGTokenizer.from_pretrained(model_path)
 
         # patch pad() jika diperlukan
         def _compat_pad_local(self, encoded_inputs, padding=False, max_length=None,
@@ -412,6 +408,8 @@ def load_model_and_tokenizer():
 
         if tokenizer.pad_token is None:
             tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+        
+        st.write("✅ Tokenizer berhasil dimuat")
 
     except Exception as e:
         st.error(f"❌ Gagal memuat tokenizer. Detail: {e}")

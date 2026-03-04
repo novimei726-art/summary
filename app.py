@@ -47,7 +47,7 @@ ERROR_TEXT = "Ringkasan gagal dibuat karena error model."
 USE_TRANSLATION = True  # Set False untuk disable terjemahan (lebih cepat)
 # Model options: "facebook/nllb-200-distilled-600M" (akurat tapi lambat)
 #                "Helsinki-NLP/opus-mt-id-en" (lebih cepat tapi kurang akurat)
-TRANSLATION_MODEL = "facebook/nllb-200-distilled-600M"
+TRANSLATION_MODEL = "Helsinki-NLP/opus-mt-id-en"
 
 # -------------------------------------------------------
 # MODEL TRANSLATE LOKAL (NLLB 200)
@@ -863,3 +863,4 @@ if (
             f'<div class="detail-box text-full">{st.session_state["full_text"]}</div>',
             unsafe_allow_html=True,
         )
+

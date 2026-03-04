@@ -13,11 +13,12 @@ from transformers import MarianMTModel, MarianTokenizer
 # -------------------------------------------------------
 # STYLE UI (opsional)
 # -------------------------------------------------------
-try:
-    from style_ui import load_custom_style
-    load_custom_style()
-except Exception as e:
-    st.warning(f"Style gagal dimuat: {e}")
+# Style UI disabled - uncomment and create style_ui.py if needed
+# try:
+#     from style_ui import load_custom_style
+#     load_custom_style()
+# except Exception as e:
+#     st.warning(f"Style gagal dimuat: {e}")
 
 
 
@@ -362,7 +363,7 @@ def _compat_pad(
 # -------------------------------------------------------
 @st.cache_resource(show_spinner="Memuat model IndoBART dan tokenizer...")
 def load_model_and_tokenizer():
-    from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+    # Using globally imported AutoModelForSeq2SeqLM and AutoTokenizer from line 9
 
     # ⚠️ GANTI INI dengan model Anda di HuggingFace Hub
     # Contoh: "username/model-name" atau gunakan model base "indobenchmark/indobart-v2"

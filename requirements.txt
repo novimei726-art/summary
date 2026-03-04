@@ -1,0 +1,7 @@
+torch
+streamlit
+requests
+beautifulsoup4
+newspaper3k
+transformers
+indobenchmark

@@ -43,12 +43,21 @@ CHUNK_STRIDE = 400
 MAX_SUMMARY_LENGTH = 100
 ERROR_TEXT = "Ringkasan gagal dibuat karena error model."
 
+# Konfigurasi Terjemahan
+USE_TRANSLATION = True  # Set False untuk disable terjemahan (lebih cepat)
+# Model options: "facebook/nllb-200-distilled-600M" (akurat tapi lambat)
+#                "Helsinki-NLP/opus-mt-id-en" (lebih cepat tapi kurang akurat)
+TRANSLATION_MODEL = "facebook/nllb-200-distilled-600M"
+
 # -------------------------------------------------------
 # MODEL TRANSLATE LOKAL (NLLB 200)
 # -------------------------------------------------------
 @st.cache_resource(show_spinner="Memuat model terjemahan Indonesia → Inggris (NLLB)...")
 def load_mt_model():
-    model_name = "facebook/nllb-200-distilled-600M"
+    if not USE_TRANSLATION:
+        return None, None, None
+        
+    model_name = TRANSLATION_MODEL
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
@@ -56,6 +65,12 @@ def load_mt_model():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model = model.to(device)
     model.eval()
+    
+    # Info device untuk user
+    device_name = "GPU (CUDA)" if device == "cuda" else "CPU (Lambat)"
+    st.info(f"🖥️ Model terjemahan berjalan di: **{device_name}**")
+    if device == "cpu":
+        st.warning("⚠️ Terjemahan akan lambat di CPU. Pertimbangkan untuk menggunakan GPU atau set USE_TRANSLATION=False di konfigurasi.")
 
     return tokenizer, model, device
 
@@ -214,6 +229,9 @@ def postprocess_translation(en_text: str, src_text: str = "") -> str:
     return out
 
 def translate_to_english(text: str) -> str:
+    if not USE_TRANSLATION or mt_model is None:
+        return "[Terjemahan dinonaktifkan]"
+        
     if not text or text == ERROR_TEXT:
         return ""
 
@@ -238,13 +256,13 @@ def translate_to_english(text: str) -> str:
             max_length=512,
         ).to(mt_device)
 
-        # 3️⃣ Generate terjemahan
+        # 3️⃣ Generate terjemahan (OPTIMIZED untuk kecepatan)
         with torch.no_grad():
             generated_tokens = mt_model.generate(
                 **encoded,
                 forced_bos_token_id=mt_tokenizer.convert_tokens_to_ids("eng_Latn"),
-                max_new_tokens=300,
-                num_beams=5,
+                max_new_tokens=200,  # Dikurangi dari 300
+                num_beams=3,  # Dikurangi dari 5 untuk lebih cepat
                 no_repeat_ngram_size=3,
             )
 
@@ -761,14 +779,21 @@ if st.session_state.get("lead_summary"):
 # -------------------------------------------------------
 # TOMBOL TERJEMAHKAN SEMUA RINGKASAN (GLOBAL)
 # -------------------------------------------------------
-if (
+if USE_TRANSLATION and (
     st.session_state.get("ringkasan_1")
     or st.session_state.get("ringkasan_3")
     or st.session_state.get("lead_summary")
 ):
     st.markdown("---")
+    
+    # Estimasi waktu
+    device_info = "GPU ⚡" if mt_device == "cuda" else "CPU 🐌"
+    est_time = "~10-30 detik" if mt_device == "cuda" else "~1-3 menit"
+    
+    st.markdown(f"**Terjemahan berjalan di {device_info} | Estimasi: {est_time}**")
+    
     if st.button("🇬🇧 Terjemahkan Semua Ringkasan ke Bahasa Inggris"):
-        with st.spinner("Menerjemahkan semua ringkasan... ⏳"):
+        with st.spinner(f"Menerjemahkan semua ringkasan ({device_info})... ⏳"):
             if st.session_state.get("ringkasan_1"):
                 st.session_state["ringkasan_1_en"] = translate_to_english(
                     st.session_state["ringkasan_1"]
@@ -783,6 +808,8 @@ if (
                 st.session_state["lead_summary_en"] = translate_to_english(
                     st.session_state["lead_summary"]
                 )
+        
+        st.success("✅ Terjemahan selesai!")
 
 # Detail berita hanya kalau ringkasan tidak error
 if (

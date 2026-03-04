@@ -363,7 +363,13 @@ def _compat_pad(
 # -------------------------------------------------------
 @st.cache_resource(show_spinner="Memuat model IndoBART dan tokenizer...")
 def load_model_and_tokenizer():
-    # Using globally imported AutoModelForSeq2SeqLM and AutoTokenizer from line 9
+    # Debug: Check if AutoTokenizer is available
+    try:
+        from transformers import AutoTokenizer as AT, AutoModelForSeq2SeqLM as AM
+        st.write("✅ Import transformers berhasil")
+    except ImportError as ie:
+        st.error(f"❌ Import transformers gagal: {ie}")
+        st.stop()
 
     # ⚠️ GANTI INI dengan model Anda di HuggingFace Hub
     # Contoh: "username/model-name" atau gunakan model base "indobenchmark/indobart-v2"
@@ -373,7 +379,7 @@ def load_model_and_tokenizer():
     # --- Load model ---
     try:
         st.write("Memuat model:", model_path)
-        model = AutoModelForSeq2SeqLM.from_pretrained(
+        model = AM.from_pretrained(
             model_path,
             trust_remote_code=True,
         ).to(device)
@@ -384,8 +390,8 @@ def load_model_and_tokenizer():
 
     # --- Load tokenizer ---
     try:
-        st.write("Memuat tokenizer AutoTokenizer...")
-        tokenizer = AutoTokenizer.from_pretrained(model_path)
+        st.write("Memuat tokenizer...")
+        tokenizer = AT.from_pretrained(model_path)
 
         # patch pad() jika diperlukan
         def _compat_pad_local(self, encoded_inputs, padding=False, max_length=None,

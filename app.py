@@ -360,17 +360,16 @@ def _compat_pad(
 # -------------------------------------------------------
 # LOAD MODEL & TOKENIZER
 # -------------------------------------------------------
-@st.cache_resource(show_spinner="Memuat model IndoBART dan tokenizer IndoNLG...")
+@st.cache_resource(show_spinner="Memuat model IndoBART dan tokenizer...")
 def load_model_and_tokenizer():
-    import types
-    from indobenchmark import IndoNLGTokenizer
-    from transformers import AutoModelForSeq2SeqLM
+    from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
-    # Sesuaikan dengan path lokal model hasil fine-tuning di laptopmu
-    model_path = "D:/SKRIPSI_SUMMARY/model/indobart-v2-detik-final-20251201-061311"
+    # ⚠️ GANTI INI dengan model Anda di HuggingFace Hub
+    # Contoh: "username/model-name" atau gunakan model base "indobenchmark/indobart-v2"
+    model_path = "indobenchmark/indobart-v2"  # Model base, bukan fine-tuned
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    # --- Load model lokal (hasil fine-tuning di Colab) ---
+    # --- Load model ---
     try:
         st.write("Memuat model:", model_path)
         model = AutoModelForSeq2SeqLM.from_pretrained(
@@ -382,12 +381,12 @@ def load_model_and_tokenizer():
         st.error(f"❌ Gagal memuat model. Detail: {e}")
         st.stop()
 
-    # --- Load tokenizer IndoNLG (harus sesuai training!!) ---
+    # --- Load tokenizer ---
     try:
-        st.write("Memuat tokenizer IndoNLGTokenizer...")
-        tokenizer = IndoNLGTokenizer.from_pretrained("indobenchmark/indobart-v2")
+        st.write("Memuat tokenizer AutoTokenizer...")
+        tokenizer = AutoTokenizer.from_pretrained(model_path)
 
-        # patch pad(), sama seperti kode training & evaluasi & Colab
+        # patch pad() jika diperlukan
         def _compat_pad_local(self, encoded_inputs, padding=False, max_length=None,
                               pad_to_multiple_of=None, return_attention_mask=None,
                               return_tensors=None, verbose=True, **kwargs):
@@ -408,7 +407,7 @@ def load_model_and_tokenizer():
             tokenizer.add_special_tokens({"pad_token": "[PAD]"})
 
     except Exception as e:
-        st.error(f"❌ Gagal memuat tokenizer IndoNLGTokenizer. Detail: {e}")
+        st.error(f"❌ Gagal memuat tokenizer. Detail: {e}")
         st.stop()
 
     return model, tokenizer, device

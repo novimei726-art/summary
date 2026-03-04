@@ -4,10 +4,10 @@ transformers
 requests
 beautifulsoup4
 lxml
+lxml_html_clean
 newspaper3k
 nltk
 Pillow
 sentencepiece
 protobuf
 accelerate
-indobenchmark-toolkit
